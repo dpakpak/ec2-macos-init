@@ -103,9 +103,39 @@ func (c *InitConfig) WriteHistoryFile() (err error) {
 	}
 
 	// Write history JSON file
-	err = ioutil.WriteFile(path.Join(c.HistoryPath, c.IMDS.InstanceID, c.HistoryFilename), historyBytes, 0644)
+	dir := path.Join(c.HistoryPath, c.IMDS.InstanceID)
+	path := path.Join(dir, c.HistoryFilename)
+	err = safeWrite(path, dir, historyBytes)
 	if err != nil {
 		return fmt.Errorf("ec2macosinit: unable to write history file: %s\n", err)
+	}
+
+	return nil
+}
+
+// safeWrite takes in the path of the history file, the folder where the history file is stored,
+// and a slice of bytes containing the data for the history file. Then it writes the data to a temporary
+// file in the same folder and renames it to the correct history file name.
+func safeWrite(path string, dir string, data []byte) error {
+	f, err := os.CreateTemp(dir, "temp")
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(data)
+	if err != nil {
+		return err
+	}
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+	err = os.Rename(f.Name(), path)
+	if err != nil {
+		return err
 	}
 
 	return nil
