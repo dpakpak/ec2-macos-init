@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func (c *InitConfig) GetInstanceHistory() (err error) {
 	// Read instance history directory
 	dirs, err := ioutil.ReadDir(c.HistoryPath)
 	if err != nil {
-		return fmt.Errorf("ec2macosinit: unable to read instance history directory: %s\n", err)
+		return fmt.Errorf("ec2macosinit: unable to read instance history directory: %s", err)
 	}
 	// For each directory, check for a history file and call readHistoryFile()
 	for _, dir := range dirs {
@@ -42,7 +43,7 @@ func (c *InitConfig) GetInstanceHistory() (err error) {
 			if _, err := os.Stat(historyFile); err == nil {
 				history, err := readHistoryFile(historyFile)
 				if err != nil {
-					return fmt.Errorf("ec2macosinit: error while reading history file at %s: %s\n", historyFile, err)
+					return fmt.Errorf("ec2macosinit: error while reading history file at %s: %w", historyFile, err)
 				}
 				// Append the returned History struct to the InstanceHistory slice
 				c.InstanceHistory = append(c.InstanceHistory, history)
@@ -58,13 +59,13 @@ func readHistoryFile(file string) (history History, err error) {
 	// Read file
 	historyBytes, err := ioutil.ReadFile(file)
 	if err != nil {
-		return History{}, fmt.Errorf("ec2macosinit: error reading config file located at %s: %s\n", file, err)
+		return History{}, fmt.Errorf("ec2macosinit: error reading config file located at %s: %w", file, err)
 	}
 
 	// Unmarshal to struct
 	err = json.Unmarshal(historyBytes, &history)
 	if err != nil {
-		return History{}, fmt.Errorf("ec2macosinit: error unmarshaling history from JSON: %s\n", err)
+		return History{}, fmt.Errorf("ec2macosinit: error unmarshaling history from JSON: %w", err)
 	}
 
 	return history, nil
@@ -93,52 +94,51 @@ func (c *InitConfig) WriteHistoryFile() (err error) {
 	// Marshal to JSON
 	historyBytes, err := json.Marshal(history)
 	if err != nil {
-		return fmt.Errorf("ec2macosinit: unable to write history file: %s\n", err)
+		return fmt.Errorf("ec2macosinit: unable to write history file: %w", err)
 	}
 
 	// Ensure the path exists and create it if it doesn't
 	err = c.CreateDirectories()
 	if err != nil {
-		return fmt.Errorf("ec2macosinit: unable to write history file: :%s\n", err)
+		return fmt.Errorf("ec2macosinit: unable to write history file: :%w", err)
 	}
 
 	// Write history JSON file
-	dir := path.Join(c.HistoryPath, c.IMDS.InstanceID)
-	path := path.Join(dir, c.HistoryFilename)
-	err = safeWrite(path, dir, historyBytes)
+	path := path.Join(c.HistoryPath, c.IMDS.InstanceID, c.HistoryFilename)
+	err = safeWrite(path, historyBytes)
 	if err != nil {
-		return fmt.Errorf("ec2macosinit: unable to write history file: %s\n", err)
+		return fmt.Errorf("ec2macosinit: unable to write history file: %w", err)
 	}
 
 	return nil
 }
 
-// safeWrite takes in the path of the history file, the folder where the history file is stored,
-// and a slice of bytes containing the data for the history file. Then it writes the data to a temporary
-// file in the same folder and renames it to the correct history file name.
-func safeWrite(path string, dir string, data []byte) error {
-	f, err := os.CreateTemp(dir, "temp")
+// safeWrite writes data to the desired file path or not at all. This function
+// protects against partially written or unflushed data intended for the file.
+func safeWrite(path string, data []byte) error {
+	f, err := os.CreateTemp(filepath.Dir(path), ".history.json.*")
 	if err != nil {
 		return err
 	}
+	defer os.Remove(f.Name())
+
 	_, err = f.Write(data)
 	if err != nil {
+		f.Close()
 		return err
 	}
 	err = f.Sync()
 	if err != nil {
+		f.Close()
 		return err
 	}
 	err = f.Close()
 	if err != nil {
 		return err
 	}
-	err = os.Rename(f.Name(), path)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return os.Rename(f.Name(), path)
+
 }
 
 // CreateDirectories creates the instance directory, if it doesn't exist and a directory for the running instance.
@@ -146,7 +146,7 @@ func (c *InitConfig) CreateDirectories() (err error) {
 	if _, err := os.Stat(path.Join(c.HistoryPath, c.IMDS.InstanceID)); os.IsNotExist(err) {
 		err := os.MkdirAll(path.Join(c.HistoryPath, c.IMDS.InstanceID), 0755)
 		if err != nil {
-			return fmt.Errorf("ec2macosinit: unable to create directory: %s\n", err)
+			return fmt.Errorf("ec2macosinit: unable to create directory: %w", err)
 		}
 	}
 	return nil
