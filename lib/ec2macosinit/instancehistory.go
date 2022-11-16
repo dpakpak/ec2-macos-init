@@ -121,24 +121,17 @@ func safeWrite(path string, data []byte) error {
 		return err
 	}
 	defer os.Remove(f.Name())
-
+	defer f.Close()
 	_, err = f.Write(data)
 	if err != nil {
-		f.Close()
 		return err
 	}
 	err = f.Sync()
-	if err != nil {
-		f.Close()
-		return err
-	}
-	err = f.Close()
 	if err != nil {
 		return err
 	}
 
 	return os.Rename(f.Name(), path)
-
 }
 
 // CreateDirectories creates the instance directory, if it doesn't exist and a directory for the running instance.
