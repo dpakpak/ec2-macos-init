@@ -122,10 +122,12 @@ func safeWrite(path string, data []byte) error {
 	}
 	defer os.Remove(f.Name())
 	defer f.Close()
+
 	_, err = f.Write(data)
 	if err != nil {
 		return err
 	}
+
 	err = f.Sync()
 	if err != nil {
 		return err
