@@ -34,7 +34,7 @@ func (c *InitConfig) GetInstanceHistory() (err error) {
 	// Read instance history directory
 	dirs, err := ioutil.ReadDir(c.HistoryPath)
 	if err != nil {
-		return fmt.Errorf("ec2macosinit: unable to read instance history directory: %s", err)
+		return fmt.Errorf("ec2macosinit: unable to read instance history directory: %w", err)
 	}
 	// For each directory, check for a history file and call readHistoryFile()
 	for _, dir := range dirs {
@@ -116,7 +116,7 @@ func (c *InitConfig) WriteHistoryFile() (err error) {
 // safeWrite writes data to the desired file path or not at all. This function
 // protects against partially written or unflushed data intended for the file.
 func safeWrite(path string, data []byte) error {
-	f, err := os.CreateTemp(filepath.Dir(path), ".history.json.*")
+	f, err := os.CreateTemp(filepath.Dir(path), fmt.Sprintf(".%s.*", filepath.Base(path)))
 	if err != nil {
 		return err
 	}
