@@ -41,6 +41,10 @@ func (c *InitConfig) GetInstanceHistory() (err error) {
 		if dir.IsDir() {
 			historyFile := path.Join(c.HistoryPath, dir.Name(), c.HistoryFilename)
 			if info, err := os.Stat(historyFile); err == nil {
+				// Check to make sure info is a file and not a directory.
+				if !info.Mode().IsRegular() {
+					continue
+				}
 				// If there is an error getting the history file or if the history file is empty do not append to Instance History
 				if info.Size() == 0 {
 					c.Log.Warnf("The history file exists at %s but is empty. Skipping this file...", historyFile)
