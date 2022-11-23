@@ -40,12 +40,10 @@ func (c *InitConfig) GetInstanceHistory() (err error) {
 	for _, dir := range dirs {
 		if dir.IsDir() {
 			historyFile := path.Join(c.HistoryPath, dir.Name(), c.HistoryFilename)
-			info, err := os.Stat(historyFile)
-			// If there is an error getting the history file or if the history file is empty do not append to Instance History
-			if err == nil {
+			if info, err := os.Stat(historyFile); err == nil {
+				// If there is an error getting the history file or if the history file is empty do not append to Instance History
 				if info.Size() == 0 {
-					path := path.Join(c.HistoryPath, c.IMDS.InstanceID, c.HistoryFilename)
-					c.Log.Infof("The history file exists at %v but is empty. Skipping this file...", path)
+					c.Log.Warnf("The history file exists at %s but is empty. Skipping this file...", historyFile)
 					continue
 				}
 				history, err := readHistoryFile(historyFile)
