@@ -27,6 +27,18 @@ type ModuleHistory struct {
 	Success bool   `json:"success"`
 }
 
+type HistoryError struct {
+	Err error
+}
+
+func (he HistoryError) Unwrap() error {
+	return he.Err
+}
+
+func (he HistoryError) Error() string {
+	return fmt.Sprintf("HistoryError: %s", he.Err)
+}
+
 // GetInstanceHistory takes a path to instance history directory and a file name for history files and searches for
 // any files that match. Then, for each file, it calls readHistoryFile() to read the file and add it to the
 // InstanceHistory struct.
@@ -74,7 +86,9 @@ func readHistoryFile(file string) (history History, err error) {
 	// Unmarshal to struct
 	err = json.Unmarshal(historyBytes, &history)
 	if err != nil {
-		return History{}, fmt.Errorf("ec2macosinit: error unmarshaling history from JSON: %w", err)
+		histErr := fmt.Errorf("history file contains invalid JSON: %w", err)
+		histErr = HistoryError{Err: err}
+		return History{}, histErr
 	}
 
 	return history, nil
