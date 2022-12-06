@@ -27,6 +27,7 @@ type ModuleHistory struct {
 	Success bool   `json:"success"`
 }
 
+// HistoryError wraps a normal error and gives the caller insight into the type of error
 type HistoryError struct {
 	err error
 }
