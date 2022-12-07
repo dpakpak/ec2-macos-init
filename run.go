@@ -72,7 +72,8 @@ func run(c *ec2macosinit.InitConfig) {
 		var herr ec2macosinit.HistoryError
 		// If GetInstanceHistory() returns a HistoryError, there was invalid JSON in the history file
 		// Catch this specific error to inform the user of the error and provide a way to remediate it.
-		if errors.Is(err, &herr) {
+		if errors.As(err, &herr) {
+			c.Log.Warn("There was an error getting instance history")
 			c.Log.Info("The history JSON files might be invalid and need to be restored or removed.")
 			c.Log.Info("Run 'sudo ec2-macos-init clean' to remove all history files.")
 		}
