@@ -27,17 +27,20 @@ type ModuleHistory struct {
 	Success bool   `json:"success"`
 }
 
-// HistoryError wraps a normal error and gives the caller insight into the type of error
+// HistoryError wraps a normal error and gives the caller insight into the type of error.
+// The caller can check the type of error and handle different types of error differently.
+// Currently HistoryError only handles errors for invalid JSON but the struct is flexible
+// and can be adjusted to handle several different errors differently.
 type HistoryError struct {
 	err error
 }
 
-func (he HistoryError) Unwrap() error {
-	return he.err
+func (h HistoryError) Unwrap() error {
+	return h.err
 }
 
-func (he HistoryError) Error() string {
-	return he.err.Error()
+func (h HistoryError) Error() string {
+	return h.err.Error()
 }
 
 // GetInstanceHistory takes a path to instance history directory and a file name for history files and searches for
