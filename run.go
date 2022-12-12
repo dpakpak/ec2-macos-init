@@ -71,7 +71,7 @@ func run(c *ec2macosinit.InitConfig) {
 	if err != nil {
 		var herr ec2macosinit.HistoryError
 		if errors.As(err, &herr) {
-			c.Log.Info("Fix this error by running: sudo ec2-macos-init clean")
+			c.Log.Info("Fix this HistoryError by running: sudo ec2-macos-init clean")
 		}
 		c.Log.Fatalf(computeExitCode(c, 1), "Error getting instance history: %s", err)
 	}

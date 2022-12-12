@@ -28,15 +28,15 @@ type ModuleHistory struct {
 }
 
 type HistoryError struct {
-	err error
+	Err error
 }
 
 func (he HistoryError) Unwrap() error {
-	return he.err
+	return he.Err
 }
 
 func (he HistoryError) Error() string {
-	return he.err.Error()
+	return fmt.Sprintf("HistoryError: %s", he.Err)
 }
 
 // GetInstanceHistory takes a path to instance history directory and a file name for history files and searches for
@@ -86,7 +86,9 @@ func readHistoryFile(file string) (history History, err error) {
 	// Unmarshal to struct
 	err = json.Unmarshal(historyBytes, &history)
 	if err != nil {
-		return History{}, HistoryError{err: err}
+		histErr := fmt.Errorf("history file contains invalid JSON: %w", err)
+		histErr = HistoryError{Err: err}
+		return History{}, histErr
 	}
 
 	return history, nil
