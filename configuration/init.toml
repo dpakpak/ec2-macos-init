@@ -26,15 +26,6 @@
     [Module.Command]
         Cmd = ["/usr/sbin/networksetup", "-setnetworkserviceenabled", "Ethernet", "off"]
 
-# Unmount Local SSD
-[[Module]]
-    Name = "UnmountLocalSSD"
-    PriorityGroup = 1 # First group
-    RunPerBoot = true # Run every boot
-    FatalOnError = false # Best effort, don't fatal on error
-    [Module.Command]
-        Cmd = ["/bin/zsh", "-c", "diskutil list internal physical | egrep -o '^/dev/disk\\d+' | xargs diskutil eject || true"]
-
 ### Group 2 ###
 ## The only task in the first group is to make sure the network is up.  Some of the subsequent actions require
 ## a connection to IMDS and will fail if this check doesn't pass.
